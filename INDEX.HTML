@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading Journal</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+margin:0;
+font-family:Arial,Helvetica,sans-serif;
+background:linear-gradient(135deg,#f8fafc,#e5e7eb);
+color:#0f172a;
+min-height:100vh
+}
+
+.hidden{display:none !important}
+
+/* ---------- FRONT PAGE ---------- */
+#front{
+position:fixed;
+inset:0;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(135deg,#f8fafc,#e5e7eb);
+z-index:10;
+}
+
+.center-page{
+max-width:650px;
+text-align:center;
+padding:20px
+}
+
+.center-page p{
+color:#334155;
+line-height:1.6
+}
+
+.auth-buttons{
+margin-top:20px;
+display:flex;
+gap:15px;
+justify-content:center
+}
+
+.auth-box{
+margin-top:25px;
+max-width:350px;
+margin-inline:auto
+}
+
+/* ---------- DASHBOARD ---------- */
+#dashboard{
+min-height:100vh;
+padding:20px;
+}
+
+.container{
+max-width:1200px;
+margin:auto
+}
+
+.top-bar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:15px
+}
+
+.month-box{width:160px}
+
+input,select,textarea{
+padding:12px;
+border-radius:6px;
+border:1px solid #cbd5f5;
+font-size:14px;
+width:100%;
+background:white
+}
+
+textarea{resize:vertical}
+
+button{
+padding:10px 14px;
+border:none;
+border-radius:6px;
+font-weight:bold;
+cursor:pointer
+}
+
+.primary{background:#4f46e5;color:white}
+.logout{
+background:#ef4444;
+color:white;
+font-size:12px;
+padding:6px 10px
+}
+
+.form-grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:14px;
+margin-top:20px
+}
+
+.form-grid textarea{grid-column:1/4}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:25px;
+background:white
+}
+
+th,td{
+padding:10px;
+border:1px solid #e5e7eb;
+text-align:center;
+font-size:14px
+}
+
+th{background:#f1f5f9}
+
+.buy{color:#16a34a;font-weight:bold}
+.sell{color:#dc2626;font-weight:bold}
+.tp{color:#16a34a;font-weight:bold}
+.sl{color:#dc2626;font-weight:bold}
+.be{color:#ca8a04;font-weight:bold}
+
+.edit{
+background:#fde047;
+padding:5px 8px;
+font-size:12px
+}
+
+.delete{
+background:#ef4444;
+color:white;
+padding:5px 8px;
+font-size:12px
+}
+
+.chart-box{
+max-width:380px;
+margin:30px auto
+}
+
+.accuracy{
+text-align:center;
+font-weight:bold
+}
+</style>
+</head>
+
+<body>
+
+<!-- FRONT PAGE -->
+<div id="front">
+  <div class="center-page">
+    <h1>Trading Journal</h1>
+    <p>
+      A trading journal helps you track performance, identify mistakes,
+      and improve discipline.<br><br>
+      Professional traders don’t grow by trading more —
+      they grow by reviewing better.
+    </p>
+
+    <div class="auth-buttons">
+      <button class="primary" onclick="openSignup()">Sign Up</button>
+      <button class="primary" onclick="openLogin()">Login</button>
+    </div>
+
+    <div id="signupBox" class="auth-box hidden">
+      <input id="suMobile" placeholder="Mobile Number">
+      <input id="suPass" type="password" placeholder="Password">
+      <button class="primary" style="margin-top:10px" onclick="signup()">Create Account</button>
+    </div>
+
+    <div id="loginBox" class="auth-box hidden">
+      <input id="liMobile" placeholder="Mobile Number">
+      <input id="liPass" type="password" placeholder="Password">
+      <button class="primary" style="margin-top:10px" onclick="login()">Login</button>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+<div class="container">
+
+<div class="top-bar">
+  <select id="month" class="month-box" onchange="loadTrades()">
+    <option>January</option><option>February</option><option>March</option>
+    <option>April</option><option>May</option><option>June</option>
+    <option>July</option><option>August</option><option>September</option>
+    <option>October</option><option>November</option><option>December</option>
+  </select>
+  <button class="logout" onclick="logout()">Logout</button>
+</div>
+
+<form id="tradeForm">
+<div class="form-grid">
+
+<input type="date" id="date" required>
+
+<select id="pair" required>
+<option disabled selected>PAIR</option>
+<option>BTCUSD</option><option>ETHUSD</option><option>XAUUSD</option>
+<option>EURUSD</option><option>GBPUSD</option><option>USDCAD</option>
+<option>USDJPY</option><option>GBPJPY</option><option>NZDUSD</option>
+<option>USOIL</option>
+</select>
+
+<input id="reason" placeholder="Reason">
+
+<select id="direction" required>
+<option disabled selected>TRADE DIRECTION</option>
+<option value="BUYING">BUYING</option>
+<option value="SELLING">SELLING</option>
+</select>
+
+<input type="number" id="sl" placeholder="SL (Pips)">
+
+<select id="riskfree" required>
+<option disabled selected>RISKFREE</option>
+<option>YES</option><option>NO</option>
+</select>
+
+<select id="result" required>
+<option disabled selected>END RESULT</option>
+<option>TP HIT</option><option>SL HIT</option><option>BREAKEVEN</option>
+</select>
+
+<input type="number" id="pips" placeholder="Pips Captured">
+<textarea id="analysis" placeholder="Analysis & Mistakes"></textarea>
+
+</div>
+
+<button class="primary" type="submit" style="margin-top:15px">Add / Update Trade</button>
+</form>
+
+<table>
+<thead>
+<tr>
+<th>SR</th>
+<th>Date</th>
+<th>Pair</th>
+<th>Reason</th>
+<th>Trade Direction</th>
+<th>SL</th>
+<th>Riskfree</th>
+<th>End Result</th>
+<th>Pips Captured</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+<tbody id="rows"></tbody>
+
+<tfoot>
+<tr>
+<td colspan="8"></td>
+<td><strong id="total">0</strong></td>
+<td></td>
+</tr>
+</tfoot>
+</table>
+
+<div class="chart-box"><canvas id="pie"></canvas></div>
+<div class="accuracy" id="accuracy">Trade Accuracy: 0%</div>
+
+</div>
+</div>
+
+<script>
+let editIndex=null,chart=null
+
+function openSignup(){
+signupBox.classList.remove('hidden')
+loginBox.classList.add('hidden')
+}
+
+function openLogin(){
+loginBox.classList.remove('hidden')
+signupBox.classList.add('hidden')
+}
+
+function signup(){
+if(localStorage.getItem('user')) return alert("User already registered")
+localStorage.setItem('user',JSON.stringify({
+mobile:suMobile.value.trim(),
+pass:suPass.value.trim()
+}))
+alert("Signup successful")
+openLogin()
+}
+
+function login(){
+let u=JSON.parse(localStorage.getItem('user'))
+if(u && u.mobile===liMobile.value.trim() && u.pass===liPass.value.trim()){
+front.classList.add('hidden')
+dashboard.classList.remove('hidden')
+loadTrades()
+}else alert("Invalid login")
+}
+
+function logout(){
+dashboard.classList.add('hidden')
+front.classList.remove('hidden')
+}
+
+tradeForm.onsubmit=e=>{
+e.preventDefault()
+let m=month.value
+let data=JSON.parse(localStorage.getItem('trades')||'{}')
+data[m]=data[m]||[]
+
+let val=result.value==='BREAKEVEN'?0:+pips.value
+let trade={date:date.value,pair:pair.value,reason:reason.value,
+direction:direction.value,sl:sl.value,riskfree:riskfree.value,
+result:result.value,pips:val}
+
+if(editIndex!==null){data[m][editIndex]=trade;editIndex=null}
+else data[m].push(trade)
+
+localStorage.setItem('trades',JSON.stringify(data))
+tradeForm.reset()
+loadTrades()
+}
+
+function loadTrades(){
+let m=month.value
+let list=(JSON.parse(localStorage.getItem('trades')||'{}')[m])||[]
+rows.innerHTML=''
+let w=0,l=0,b=0,tp=0
+
+list.forEach((t,i)=>{
+let p=0
+if(t.result==='TP HIT'){p=t.pips;w++}
+if(t.result==='SL HIT'){p=-t.pips;l++}
+if(t.result==='BREAKEVEN'){p=0;b++}
+tp+=p
+
+rows.innerHTML+=`
+<tr>
+<td>${i+1}</td>
+<td>${t.date}</td>
+<td>${t.pair}</td>
+<td>${t.reason}</td>
+<td class="${t.direction==='BUYING'?'buy':'sell'}">${t.direction}</td>
+<td>${t.sl}</td>
+<td>${t.riskfree}</td>
+<td class="${t.result==='TP HIT'?'tp':t.result==='SL HIT'?'sl':'be'}">${t.result}</td>
+<td>${p}</td>
+<td>
+<button class="edit" onclick="editTrade(${i})">Edit</button>
+<button class="delete" onclick="delTrade(${i})">Delete</button>
+</td>
+</tr>`
+})
+
+total.innerText=tp
+accuracy.innerText=`Trade Accuracy: ${w+l?((w/(w+l))*100).toFixed(2):0}%`
+drawChart(w,l,b)
+}
+
+function editTrade(i){
+let t=JSON.parse(localStorage.getItem('trades'))[month.value][i]
+editIndex=i
+Object.keys(t).forEach(k=>document.getElementById(k).value=t[k])
+}
+
+function delTrade(i){
+let d=JSON.parse(localStorage.getItem('trades'))
+d[month.value].splice(i,1)
+localStorage.setItem('trades',JSON.stringify(d))
+loadTrades()
+}
+
+function drawChart(w,l,b){
+if(chart) chart.destroy()
+chart=new Chart(pie,{
+type:'pie',
+data:{labels:['Win','Loss','Breakeven'],
+datasets:[{data:[w,l,b],backgroundColor:['#16a34a','#dc2626','#ca8a04']}]}
+})
+}
+</script>
+
+</body>
+</html>
